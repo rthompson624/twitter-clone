@@ -14,10 +14,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
     <SessionProvider session={session}>
       <Head>
         <title>Twitter Clone</title>
-        <meta
-          name="description"
-          content="This is a Twitter clone by Web Dev Simplified"
-        />
+        <meta name="description" content="This is a Twitter clone" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="container mx-auto flex items-start sm:pr-4">
