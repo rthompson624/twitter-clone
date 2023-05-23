@@ -15,7 +15,29 @@ export const tweetRouter = createTRPCRouter({
       const tweet = await ctx.prisma.tweet.create({
         data: { content: input.content, userId: ctx.session.user.id },
       });
+
+      // Revalidate cache of profile page since it is SSG
+      void ctx.revalidateSSG?.(`/profiles/${ctx.session.user.id}`);
+
       return tweet;
+    }),
+  infiniteProfileFeed: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        limit: z.number().optional().default(10),
+        cursor: z.object({ id: z.string(), createdAt: z.date() }).optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      return await getInfiniteTweets({
+        whereClause: {
+          userId: input.userId,
+        },
+        ctx,
+        limit: input.limit,
+        cursor: input.cursor,
+      });
     }),
   infiniteFeed: publicProcedure
     .input(

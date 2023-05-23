@@ -68,26 +68,40 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
   const trpcCtx = api.useContext();
   const toggleLike = api.tweet.toggleLike.useMutation({
     onSuccess: ({ liked }) => {
-      trpcCtx.tweet.infiniteFeed.setInfiniteData({}, (oldData) => {
+      const updateData: Parameters<
+        typeof trpcCtx.tweet.infiniteFeed.setInfiniteData
+      >[1] = (oldData) => {
         if (oldData == null) return;
-        const likeCountModifier = liked ? 1 : -1;
+        const countModifier = liked ? 1 : -1;
         return {
           ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            tweets: page.tweets.map((tweetItr) => {
-              if (tweetItr.id === tweet.id) {
-                return {
-                  ...tweetItr,
-                  likeCount: tweetItr.likeCount + likeCountModifier,
-                  likedByMe: liked,
-                };
-              }
-              return tweetItr;
-            }),
-          })),
+          pages: oldData.pages.map((page) => {
+            return {
+              ...page,
+              tweets: page.tweets.map((itr) => {
+                if (itr.id === tweet.id) {
+                  return {
+                    ...itr,
+                    likeCount: itr.likeCount + countModifier,
+                    likedByMe: liked,
+                  };
+                }
+                return itr;
+              }),
+            };
+          }),
         };
-      });
+      };
+
+      trpcCtx.tweet.infiniteFeed.setInfiniteData({}, updateData);
+      trpcCtx.tweet.infiniteFeed.setInfiniteData(
+        { onlyFollowing: true },
+        updateData
+      );
+      trpcCtx.tweet.infiniteProfileFeed.setInfiniteData(
+        { userId: tweet.user.id },
+        updateData
+      );
     },
   });
 
