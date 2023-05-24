@@ -2,10 +2,16 @@ import Link from "next/link";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { ProfileImage } from "./ProfileImage";
 import { useSession } from "next-auth/react";
-import { VscHeartFilled, VscHeart, VscGitCompare } from "react-icons/vsc";
+import {
+  VscHeartFilled,
+  VscHeart,
+  VscGitCompare,
+  VscClose,
+} from "react-icons/vsc";
 import { IconHoverEffect } from "./IconHoverEffect";
 import { api } from "~/utils/api";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { useState } from "react";
 
 type Tweet = {
   id: string;
@@ -259,6 +265,7 @@ function RetweetButton({
   isLoading,
   onClick,
 }: RetweetButtonProps) {
+  const [showMenu, setShowMenu] = useState(false);
   const session = useSession();
 
   if (session.status !== "authenticated") {
@@ -270,26 +277,49 @@ function RetweetButton({
     );
   }
 
+  function toggleRetweet() {
+    setShowMenu(!showMenu);
+    onClick();
+  }
+
   return (
-    <button
-      onClick={onClick}
-      disabled={isLoading}
-      className={`group -ml-2 flex items-center gap-1 self-start transition-colors duration-200 ${
-        retweetedByMe
-          ? "text-green-500"
-          : "text-gray-500 hover:text-green-700 focus-visible:text-green-700"
-      }`}
-    >
-      <IconHoverEffect color={"green"}>
-        <VscGitCompare
-          className={`transition-colors duration-200 ${
-            retweetedByMe
-              ? "fill-green-500"
-              : "fill-gray-500 group-hover:fill-green-700 group-focus-visible:fill-green-700"
-          }`}
-        />
-      </IconHoverEffect>
-      <span>{retweetCount}</span>
-    </button>
+    <div className="relative flex flex-col">
+      <button
+        onClick={() => setShowMenu(!showMenu)}
+        disabled={isLoading}
+        className={`group -ml-2 flex items-center gap-1 self-start transition-colors duration-200 ${
+          retweetedByMe
+            ? "text-green-500"
+            : "text-gray-500 hover:text-green-700 focus-visible:text-green-700"
+        }`}
+      >
+        <IconHoverEffect color={"green"}>
+          <VscGitCompare
+            className={`transition-colors duration-200 ${
+              retweetedByMe
+                ? "fill-green-500"
+                : "fill-gray-500 group-hover:fill-green-700 group-focus-visible:fill-green-700"
+            }`}
+          />
+        </IconHoverEffect>
+        <span>{retweetCount}</span>
+      </button>
+      {showMenu && (
+        <ul className="menu rounded-box absolute -left-16 top-0 z-10 w-44 bg-base-100">
+          <li className="bg-gray-100">
+            <a onClick={() => toggleRetweet()}>
+              <VscGitCompare />
+              {retweetedByMe ? "Undo Retweet" : "Retweet"}
+            </a>
+          </li>
+          <li>
+            <a onClick={() => setShowMenu(!showMenu)}>
+              <VscClose />
+              Cancel
+            </a>
+          </li>
+        </ul>
+      )}
+    </div>
   );
 }
