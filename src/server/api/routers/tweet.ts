@@ -184,7 +184,7 @@ async function getInfiniteTweets({
         ? ctx.session?.user.name
         : tweet.retweets[0]?.user.name;
 
-      return {
+      const formattedTweet: InfiniteFeedTweet = {
         id: tweet.id,
         content: tweet.content,
         createdAt: tweet.createdAt,
@@ -195,7 +195,25 @@ async function getInfiniteTweets({
         retweetedByMe,
         retweetCreditorName,
       };
+
+      return formattedTweet;
     }),
     nextCursor,
   };
 }
+
+export type InfiniteFeedTweet = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  likeCount: number;
+  retweetCount: number;
+  user: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+  likedByMe: boolean;
+  retweetedByMe: boolean;
+  retweetCreditorName: string | null | undefined;
+};
