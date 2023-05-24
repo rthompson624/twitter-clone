@@ -68,6 +68,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 function TweetCard({ tweet }: { tweet: Tweet }) {
+  const session = useSession();
   const trpcCtx = api.useContext();
   const toggleLike = api.tweet.toggleLike.useMutation({
     onSuccess: ({ liked }) => {
@@ -114,6 +115,7 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
       >[1] = (oldData) => {
         if (oldData == null) return;
         const countModifier = retweeted ? 1 : -1;
+        const retweetCreditorName = retweeted ? session.data?.user.name : null;
         return {
           ...oldData,
           pages: oldData.pages.map((page) => {
@@ -125,6 +127,7 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
                     ...itr,
                     retweetCount: itr.retweetCount + countModifier,
                     retweetedByMe: retweeted,
+                    retweetCreditorName,
                   };
                 }
                 return itr;
@@ -161,9 +164,7 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
       </Link>
       <div className="flex flex-grow flex-col">
         {tweet.retweetCreditorName && (
-          <div className="text-sm">
-            Retweeted by {tweet.retweetCreditorName}
-          </div>
+          <div className="text-sm">{tweet.retweetCreditorName} Retweeted</div>
         )}
         <div className="flex flex-wrap items-center gap-x-2">
           <Link

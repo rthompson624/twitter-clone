@@ -8,9 +8,6 @@ import Head from "next/head";
 import { ssgHelper } from "~/server/api/ssgHelper";
 import { api } from "~/utils/api";
 import ErrorPage from "next/error";
-import Link from "next/link";
-import { IconHoverEffect } from "~/components/IconHoverEffect";
-import { VscArrowLeft } from "react-icons/vsc";
 import { ProfileImage } from "~/components/ProfileImage";
 import { InfiniteTweetList } from "~/components/InfiniteTweetList";
 import { useSession } from "next-auth/react";
@@ -46,14 +43,9 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
       <Head>
         <title>{`Twitter Clone - ${profile.name}`}</title>
       </Head>
-      <header className="sticky top-0 z-10">
-        <h1 className="mt-2 px-4 text-lg font-bold">Profile</h1>
-        <div className="flex items-center border-b bg-white px-4 py-2">
-          {/* <Link href=".." className="mr-2">
-            <IconHoverEffect>
-              <VscArrowLeft className="h-6 w-6" />
-            </IconHoverEffect>
-          </Link> */}
+      <header className="sticky top-0 z-10 border-b bg-white px-4 py-2">
+        <h1 className="text-lg font-bold">Profile</h1>
+        <div className="flex items-center">
           <ProfileImage src={profile.image} className="flex-shrink-0" />
           <div className="ml-4 flex-grow">
             <h1 className="text-lg font-bold">{profile.name}</h1>
