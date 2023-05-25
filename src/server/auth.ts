@@ -44,6 +44,17 @@ export const authOptions: NextAuthOptions = {
         id: user.id,
       },
     }),
+    async signIn({ user, profile }) {
+      const providerUserImage = (profile as unknown as { image_url: string })
+        .image_url;
+      if (user.id && user.image !== providerUserImage) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { image: providerUserImage },
+        });
+      }
+      return true;
+    },
   },
   adapter: PrismaAdapter(prisma),
   providers: [

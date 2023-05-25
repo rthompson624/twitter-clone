@@ -32,7 +32,12 @@ export const tweetRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       return await getInfiniteTweets({
         whereClause: {
-          userId: input.userId,
+          OR: [
+            {
+              userId: input.userId,
+            },
+            { retweets: { some: { userId: input.userId } } },
+          ],
         },
         ctx,
         limit: input.limit,
@@ -54,9 +59,22 @@ export const tweetRouter = createTRPCRouter({
           currentUserId == null || !input.onlyFollowing
             ? undefined
             : {
-                user: {
-                  followers: { some: { id: currentUserId } },
-                },
+                OR: [
+                  {
+                    user: {
+                      followers: { some: { id: currentUserId } },
+                    },
+                  },
+                  {
+                    retweets: {
+                      some: {
+                        user: {
+                          followers: { some: { id: currentUserId } },
+                        },
+                      },
+                    },
+                  },
+                ],
               },
         ctx,
         limit: input.limit,
@@ -83,6 +101,24 @@ export const tweetRouter = createTRPCRouter({
         return { liked: false };
       }
     }),
+  toggleRetweet: protectedProcedure
+    .input(z.object({ tweetId: z.string() }))
+    .mutation(async ({ input: { tweetId }, ctx }) => {
+      const existingRetweet = await ctx.prisma.retweet.findUnique({
+        where: { userId_tweetId: { userId: ctx.session.user.id, tweetId } },
+      });
+      if (existingRetweet == null) {
+        await ctx.prisma.retweet.create({
+          data: { tweetId, userId: ctx.session.user.id },
+        });
+        return { retweeted: true };
+      } else {
+        await ctx.prisma.retweet.delete({
+          where: { userId_tweetId: { userId: ctx.session.user.id, tweetId } },
+        });
+        return { retweeted: false };
+      }
+    }),
 });
 
 async function getInfiniteTweets({
@@ -107,9 +143,25 @@ async function getInfiniteTweets({
       id: true,
       content: true,
       createdAt: true,
-      _count: { select: { likes: true } },
+      _count: { select: { likes: true, retweets: true } },
       likes:
         currentUserId == null ? false : { where: { userId: currentUserId } },
+      retweets: {
+        where: {
+          OR: [
+            { userId: currentUserId },
+            { user: { followers: { some: { id: currentUserId } } } },
+          ],
+        },
+        select: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
       user: { select: { name: true, id: true, image: true } },
     },
   });
@@ -122,14 +174,46 @@ async function getInfiniteTweets({
     }
   }
   return {
-    tweets: data.map((tweet) => ({
-      id: tweet.id,
-      content: tweet.content,
-      createdAt: tweet.createdAt,
-      likeCount: tweet._count.likes,
-      user: tweet.user,
-      likedByMe: tweet.likes?.length > 0,
-    })),
+    tweets: data.map((tweet) => {
+      const retweetedByMe = tweet.retweets.find(
+        (retweet) => retweet.user.id === currentUserId
+      )
+        ? true
+        : false;
+      const retweetCreditorName = retweetedByMe
+        ? ctx.session?.user.name
+        : tweet.retweets[0]?.user.name;
+
+      const formattedTweet: InfiniteFeedTweet = {
+        id: tweet.id,
+        content: tweet.content,
+        createdAt: tweet.createdAt,
+        likeCount: tweet._count.likes,
+        retweetCount: tweet._count.retweets,
+        user: tweet.user,
+        likedByMe: tweet.likes?.length > 0,
+        retweetedByMe,
+        retweetCreditorName,
+      };
+
+      return formattedTweet;
+    }),
     nextCursor,
   };
 }
+
+export type InfiniteFeedTweet = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  likeCount: number;
+  retweetCount: number;
+  user: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+  likedByMe: boolean;
+  retweetedByMe: boolean;
+  retweetCreditorName: string | null | undefined;
+};

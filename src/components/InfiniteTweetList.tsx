@@ -2,22 +2,31 @@ import Link from "next/link";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { ProfileImage } from "./ProfileImage";
 import { useSession } from "next-auth/react";
-import { VscHeartFilled, VscHeart } from "react-icons/vsc";
+import {
+  VscHeartFilled,
+  VscHeart,
+  VscGitCompare,
+  VscClose,
+} from "react-icons/vsc";
 import { IconHoverEffect } from "./IconHoverEffect";
 import { api } from "~/utils/api";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { useState } from "react";
 
 type Tweet = {
   id: string;
   content: string;
   createdAt: Date;
   likeCount: number;
+  retweetCount: number;
   user: {
     id: string;
     name: string | null;
     image: string | null;
   };
   likedByMe: boolean;
+  retweetedByMe: boolean;
+  retweetCreditorName: string | null | undefined;
 };
 
 type InfiniteTweetListProps = {
@@ -40,7 +49,7 @@ export function InfiniteTweetList({
 
   if (tweets == null || tweets.length === 0) {
     return (
-      <h2 className="my-4 text-center text-2xl text-gray-500">No Tweets</h2>
+      <h2 className="my-4 text-center text-xl text-gray-500">No Tweets</h2>
     );
   }
 
@@ -51,6 +60,7 @@ export function InfiniteTweetList({
         next={fetchNewTweets}
         hasMore={hasMore ? hasMore : false}
         loader={<LoadingSpinner />}
+        scrollableTarget="infiniteScrollTarget"
       >
         {tweets.map((tweet) => (
           <TweetCard tweet={tweet} key={tweet.id} />
@@ -65,6 +75,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 function TweetCard({ tweet }: { tweet: Tweet }) {
+  const session = useSession();
   const trpcCtx = api.useContext();
   const toggleLike = api.tweet.toggleLike.useMutation({
     onSuccess: ({ liked }) => {
@@ -104,9 +115,53 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
       );
     },
   });
+  const toggleRetweet = api.tweet.toggleRetweet.useMutation({
+    onSuccess: ({ retweeted }) => {
+      const updateData: Parameters<
+        typeof trpcCtx.tweet.infiniteFeed.setInfiniteData
+      >[1] = (oldData) => {
+        if (oldData == null) return;
+        const countModifier = retweeted ? 1 : -1;
+        const retweetCreditorName = retweeted ? session.data?.user.name : null;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => {
+            return {
+              ...page,
+              tweets: page.tweets.map((itr) => {
+                if (itr.id === tweet.id) {
+                  return {
+                    ...itr,
+                    retweetCount: itr.retweetCount + countModifier,
+                    retweetedByMe: retweeted,
+                    retweetCreditorName,
+                  };
+                }
+                return itr;
+              }),
+            };
+          }),
+        };
+      };
+
+      trpcCtx.tweet.infiniteFeed.setInfiniteData({}, updateData);
+      trpcCtx.tweet.infiniteFeed.setInfiniteData(
+        { onlyFollowing: true },
+        updateData
+      );
+      trpcCtx.tweet.infiniteProfileFeed.setInfiniteData(
+        { userId: tweet.user.id },
+        updateData
+      );
+    },
+  });
 
   function handleToggleLike() {
     toggleLike.mutate({ id: tweet.id });
+  }
+
+  function handleToggleRetweet() {
+    toggleRetweet.mutate({ tweetId: tweet.id });
   }
 
   return (
@@ -115,43 +170,53 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
         <ProfileImage src={tweet.user.image} />
       </Link>
       <div className="flex flex-grow flex-col">
-        <div className="flex gap-1">
+        {tweet.retweetCreditorName && (
+          <div className="text-sm">{tweet.retweetCreditorName} Retweeted</div>
+        )}
+        <div className="flex flex-wrap items-center gap-x-2">
           <Link
             href={`/profiles/${tweet.user.id}`}
             className="font-bold hover:underline"
           >
             {tweet.user.name}
           </Link>
-          <span className="text-gray-500">-</span>
-          <span className="text-gray-500">
+          <div className="text-xs text-gray-500">
             {dateTimeFormatter.format(tweet.createdAt)}
-          </span>
+          </div>
         </div>
         <p className="whitespace-pre-wrap">{tweet.content}</p>
-        <HeartButton
-          likedByMe={tweet.likedByMe}
-          likeCount={tweet.likeCount}
-          isLoading={toggleLike.isLoading}
-          onClick={handleToggleLike}
-        />
+        <div className="flex gap-6">
+          <RetweetButton
+            retweetedByMe={tweet.retweetedByMe}
+            retweetCount={tweet.retweetCount}
+            isLoading={toggleRetweet.isLoading}
+            onClick={handleToggleRetweet}
+          />
+          <LikeButton
+            likedByMe={tweet.likedByMe}
+            likeCount={tweet.likeCount}
+            isLoading={toggleLike.isLoading}
+            onClick={handleToggleLike}
+          />
+        </div>
       </div>
     </li>
   );
 }
 
-type HeartButtonProps = {
+type LikeButtonProps = {
   likedByMe: boolean;
   likeCount: number;
   onClick: () => void;
   isLoading: boolean;
 };
 
-function HeartButton({
+function LikeButton({
   likedByMe,
   likeCount,
   isLoading,
   onClick,
-}: HeartButtonProps) {
+}: LikeButtonProps) {
   const session = useSession();
   const HeartIcon = likedByMe ? VscHeartFilled : VscHeart;
 
@@ -174,7 +239,7 @@ function HeartButton({
           : "text-gray-500 hover:text-red-500 focus-visible:text-red-500"
       }`}
     >
-      <IconHoverEffect red>
+      <IconHoverEffect color={"red"}>
         <HeartIcon
           className={`transition-colors duration-200 ${
             likedByMe
@@ -185,5 +250,77 @@ function HeartButton({
       </IconHoverEffect>
       <span>{likeCount}</span>
     </button>
+  );
+}
+
+type RetweetButtonProps = {
+  retweetedByMe: boolean;
+  retweetCount: number;
+  onClick: () => void;
+  isLoading: boolean;
+};
+
+function RetweetButton({
+  retweetedByMe,
+  retweetCount,
+  isLoading,
+  onClick,
+}: RetweetButtonProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const session = useSession();
+
+  if (session.status !== "authenticated") {
+    return (
+      <div className="mb-1 mt-1 flex items-center gap-3 self-start text-gray-500">
+        <VscGitCompare />
+        <span>{retweetCount}</span>
+      </div>
+    );
+  }
+
+  function toggleRetweet() {
+    setShowMenu(!showMenu);
+    onClick();
+  }
+
+  return (
+    <div className="relative flex flex-col">
+      <button
+        onClick={() => setShowMenu(!showMenu)}
+        disabled={isLoading}
+        className={`group -ml-2 flex items-center gap-1 self-start transition-colors duration-200 ${
+          retweetedByMe
+            ? "text-green-500"
+            : "text-gray-500 hover:text-green-700 focus-visible:text-green-700"
+        }`}
+      >
+        <IconHoverEffect color={"green"}>
+          <VscGitCompare
+            className={`transition-colors duration-200 ${
+              retweetedByMe
+                ? "fill-green-500"
+                : "fill-gray-500 group-hover:fill-green-700 group-focus-visible:fill-green-700"
+            }`}
+          />
+        </IconHoverEffect>
+        <span>{retweetCount}</span>
+      </button>
+      {showMenu && (
+        <ul className="menu rounded-box absolute -left-16 top-0 z-10 w-44 bg-base-100">
+          <li className="bg-gray-100">
+            <a onClick={() => toggleRetweet()}>
+              <VscGitCompare />
+              {retweetedByMe ? "Undo Retweet" : "Retweet"}
+            </a>
+          </li>
+          <li>
+            <a onClick={() => setShowMenu(!showMenu)}>
+              <VscClose />
+              Cancel
+            </a>
+          </li>
+        </ul>
+      )}
+    </div>
   );
 }

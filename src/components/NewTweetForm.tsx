@@ -3,6 +3,7 @@ import { Button } from "./Button";
 import { ProfileImage } from "./ProfileImage";
 import { type FormEvent, useState } from "react";
 import { api } from "~/utils/api";
+import { type InfiniteFeedTweet } from "~/server/api/routers/tweet";
 
 export function NewTweetForm() {
   const session = useSession();
@@ -11,10 +12,12 @@ export function NewTweetForm() {
   const createTweet = api.tweet.create.useMutation({
     onSuccess: (newTweet) => {
       setInputValue("");
-      trpcCtx.tweet.infiniteFeed.setInfiniteData({}, (oldData) => {
+      const updater: Parameters<
+        typeof trpcCtx.tweet.infiniteFeed.setInfiniteData
+      >[1] = (oldData) => {
         if (oldData == null || oldData.pages[0] == null) return;
         if (session.data == null) return;
-        const cachedTweet = {
+        const cachedTweet: InfiniteFeedTweet = {
           ...newTweet,
           likeCount: 0,
           likedByMe: false,
@@ -23,6 +26,9 @@ export function NewTweetForm() {
             name: session.data.user.name || null,
             image: session.data.user.image || null,
           },
+          retweetCount: 0,
+          retweetedByMe: false,
+          retweetCreditorName: null,
         };
         return {
           ...oldData,
@@ -34,7 +40,8 @@ export function NewTweetForm() {
             ...oldData.pages.slice(1),
           ],
         };
-      });
+      };
+      trpcCtx.tweet.infiniteFeed.setInfiniteData({}, updater);
     },
   });
 

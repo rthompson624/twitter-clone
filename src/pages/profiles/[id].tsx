@@ -8,9 +8,6 @@ import Head from "next/head";
 import { ssgHelper } from "~/server/api/ssgHelper";
 import { api } from "~/utils/api";
 import ErrorPage from "next/error";
-import Link from "next/link";
-import { IconHoverEffect } from "~/components/IconHoverEffect";
-import { VscArrowLeft } from "react-icons/vsc";
 import { ProfileImage } from "~/components/ProfileImage";
 import { InfiniteTweetList } from "~/components/InfiniteTweetList";
 import { useSession } from "next-auth/react";
@@ -46,25 +43,24 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
       <Head>
         <title>{`Twitter Clone - ${profile.name}`}</title>
       </Head>
-      <header className="sticky top-0 z-10">
-        <h1 className="mt-2 px-4 text-lg font-bold">Profile</h1>
-        <div className="flex items-center border-b bg-white px-4 py-2">
-          {/* <Link href=".." className="mr-2">
-            <IconHoverEffect>
-              <VscArrowLeft className="h-6 w-6" />
-            </IconHoverEffect>
-          </Link> */}
-          <ProfileImage src={profile.image} className="flex-shrink-0" />
-          <div className="ml-4 flex-grow">
+      <header className="sticky top-0 z-10 border-b bg-white pt-2">
+        <h1 className="mb-2 hidden px-4 text-lg font-bold lg:block">Profile</h1>
+        <div className="pl-4 pt-2 lg:hidden">
+          <label htmlFor="my-drawer-2" className="hover:cursor-pointer">
+            <ProfileImage src={profile.image} small />
+          </label>
+        </div>
+        <div className="flex items-center">
+          <div className="ml-4 mt-1 flex-grow">
             <h1 className="text-lg font-bold">{profile.name}</h1>
-            <div className="flex flex-col text-gray-500">
+            <div className="mb-4 flex flex-row gap-6 text-sm text-gray-500">
               <div>
                 {profile.tweetsCount}{" "}
                 {getPlural(profile.tweetsCount, "Tweet", "Tweets")}
               </div>
               <div>
                 {profile.followersCount}{" "}
-                {getPlural(profile.tweetsCount, "Follower", "Followers")}
+                {getPlural(profile.followersCount, "Follower", "Followers")}
               </div>
               <div>
                 {profile.followsCount}
