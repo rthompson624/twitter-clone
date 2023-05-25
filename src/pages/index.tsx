@@ -4,17 +4,30 @@ import { InfiniteTweetList } from "~/components/InfiniteTweetList";
 import { NewTweetForm } from "~/components/NewTweetForm";
 import { api } from "~/utils/api";
 import { useState } from "react";
+import { ProfileImage } from "~/components/ProfileImage";
 
-type TabOption = "Recent" | "Following";
-const TABS: TabOption[] = ["Recent", "Following"];
+type TabOption = "For you" | "Following";
+const TABS: TabOption[] = ["For you", "Following"];
 
 const Home: NextPage = () => {
-  const [selectedTab, setSelectedTab] = useState<TabOption>("Recent");
+  const [selectedTab, setSelectedTab] = useState<TabOption>("For you");
   const session = useSession();
   return (
     <>
       <header className="sticky top-0 z-10 border-b bg-white pt-2">
-        <h1 className="mb-2 px-4 text-lg font-bold">Home</h1>
+        <h1 className="mb-2 hidden px-4 text-lg font-bold lg:block">Home</h1>
+        <div className="pl-4 pt-2 lg:hidden">
+          <label
+            htmlFor="my-drawer-2"
+            className="flex gap-4 hover:cursor-pointer "
+          >
+            <ProfileImage src={session.data?.user.image} small />
+            {session.status !== "authenticated" && (
+              <div className="mb-5">You are signed out. Click to sign in.</div>
+            )}
+          </label>
+        </div>
+
         {session.status === "authenticated" && (
           <div className="flex">
             {TABS.map((tab) => {
@@ -36,7 +49,7 @@ const Home: NextPage = () => {
         )}
       </header>
       <NewTweetForm />
-      {selectedTab === "Recent" ? <RecentTweets /> : <FollowingTweets />}
+      {selectedTab === "For you" ? <RecentTweets /> : <FollowingTweets />}
     </>
   );
 };

@@ -4,12 +4,18 @@ import { VscAccount } from "react-icons/vsc";
 type ProfileImageProps = {
   src?: string | null;
   className?: string;
+  small?: boolean;
 };
 
-export function ProfileImage({ src, className = "" }: ProfileImageProps) {
+export function ProfileImage({
+  src,
+  className = "",
+  small = false,
+}: ProfileImageProps) {
+  const size = small ? "h-8 w-8" : "h-10 w-10";
   return (
     <div
-      className={`relative h-12 w-12 overflow-hidden rounded-full ${className}`}
+      className={`relative ${size} overflow-hidden rounded-full ${className}`}
     >
       {src == null ? (
         <VscAccount className="h-full w-full" />

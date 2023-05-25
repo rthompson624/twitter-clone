@@ -49,7 +49,7 @@ export function InfiniteTweetList({
 
   if (tweets == null || tweets.length === 0) {
     return (
-      <h2 className="my-4 text-center text-2xl text-gray-500">No Tweets</h2>
+      <h2 className="my-4 text-center text-xl text-gray-500">No Tweets</h2>
     );
   }
 
@@ -60,6 +60,7 @@ export function InfiniteTweetList({
         next={fetchNewTweets}
         hasMore={hasMore ? hasMore : false}
         loader={<LoadingSpinner />}
+        scrollableTarget="infiniteScrollTarget"
       >
         {tweets.map((tweet) => (
           <TweetCard tweet={tweet} key={tweet.id} />
