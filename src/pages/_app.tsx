@@ -25,8 +25,8 @@ const MyApp: AppType<{ session: Session | null }> = ({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div
-        data-theme="light"
-        className="drawer-mobile container drawer mx-auto"
+        data-theme="mytheme"
+        className="container drawer-mobile drawer mx-auto"
       >
         <input
           ref={checkboxRef}

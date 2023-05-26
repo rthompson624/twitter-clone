@@ -23,7 +23,9 @@ const Home: NextPage = () => {
           >
             <ProfileImage src={session.data?.user.image} small />
             {session.status !== "authenticated" && (
-              <div className="mb-5">You are signed out. Click to sign in.</div>
+              <div className="mb-5">
+                You are not signed in. Click to sign in.
+              </div>
             )}
           </label>
         </div>
