@@ -24,7 +24,10 @@ const MyApp: AppType<{ session: Session | null }> = ({
         <meta name="description" content="This is a Twitter clone" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="drawer-mobile container drawer mx-auto">
+      <div
+        data-theme="light"
+        className="drawer-mobile container drawer mx-auto"
+      >
         <input
           ref={checkboxRef}
           id="my-drawer-2"
