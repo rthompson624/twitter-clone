@@ -8,10 +8,10 @@ import Head from "next/head";
 import { ssgHelper } from "~/server/api/ssgHelper";
 import { api } from "~/utils/api";
 import ErrorPage from "next/error";
-import { ProfileImage } from "~/components/ProfileImage";
 import { InfiniteTweetList } from "~/components/InfiniteTweetList";
 import { useSession } from "next-auth/react";
 import { Button } from "~/components/Button";
+import { MdMenu } from "react-icons/md";
 
 const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   id,
@@ -47,7 +47,7 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
         <h1 className="mb-2 hidden px-4 text-lg font-bold lg:block">Profile</h1>
         <div className="pl-4 pt-2 lg:hidden">
           <label htmlFor="my-drawer-2" className="hover:cursor-pointer">
-            <ProfileImage src={profile.image} small />
+            <MdMenu className="h-6 w-6" />
           </label>
         </div>
         <div className="flex items-center pr-3">

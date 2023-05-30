@@ -4,7 +4,7 @@ import { InfiniteTweetList } from "~/components/InfiniteTweetList";
 import { NewTweetForm } from "~/components/NewTweetForm";
 import { api } from "~/utils/api";
 import { useState } from "react";
-import { ProfileImage } from "~/components/ProfileImage";
+import { MdMenu } from "react-icons/md";
 
 type TabOption = "For you" | "Following";
 const TABS: TabOption[] = ["For you", "Following"];
@@ -21,7 +21,7 @@ const Home: NextPage = () => {
             htmlFor="my-drawer-2"
             className="flex gap-4 hover:cursor-pointer "
           >
-            <ProfileImage src={session.data?.user.image} small />
+            <MdMenu className="h-6 w-6" />
             {session.status !== "authenticated" && (
               <div className="mb-5">
                 You are not signed in. Click to sign in.
