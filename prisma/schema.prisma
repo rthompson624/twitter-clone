@@ -19,8 +19,22 @@ model Tweet {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes     Like[]
   retweets  Retweet[]
+  comments  Comment[]
 
   @@unique([createdAt, id])
+  @@index([userId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  tweetId   String
+  tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  content   String
+
+  @@index([tweetId])
   @@index([userId])
 }
 
@@ -91,6 +105,7 @@ model User {
   followers User[]    @relation(name: "Followers")
   follows   User[]    @relation(name: "Followers")
   retweets  Retweet[]
+  comments  Comment[]
 }
 
 model VerificationToken {
