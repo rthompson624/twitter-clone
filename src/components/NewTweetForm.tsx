@@ -23,12 +23,15 @@ export function NewTweetForm() {
           likedByMe: false,
           user: {
             id: session.data.user.id,
-            name: session.data.user.name || null,
-            image: session.data.user.image || null,
+            name: session.data.user.name,
+            image: session.data.user.image,
           },
           retweetCount: 0,
           retweetedByMe: false,
           retweetCreditorName: null,
+          comments: [],
+          commentCount: 0,
+          commentedByMe: false,
         };
         return {
           ...oldData,
@@ -42,6 +45,10 @@ export function NewTweetForm() {
         };
       };
       trpcCtx.tweet.infiniteFeed.setInfiniteData({}, updater);
+      trpcCtx.tweet.infiniteFeed.setInfiniteData(
+        { onlyFollowing: true },
+        updater
+      );
     },
   });
 

@@ -119,6 +119,14 @@ export const tweetRouter = createTRPCRouter({
         return { retweeted: false };
       }
     }),
+  createComment: protectedProcedure
+    .input(z.object({ content: z.string(), tweetId: z.string() }))
+    .mutation(async ({ input: { content, tweetId }, ctx }) => {
+      const comment = await ctx.prisma.comment.create({
+        data: { userId: ctx.session.user.id, tweetId, content },
+      });
+      return comment;
+    }),
 });
 
 async function getInfiniteTweets({
@@ -143,7 +151,7 @@ async function getInfiniteTweets({
       id: true,
       content: true,
       createdAt: true,
-      _count: { select: { likes: true, retweets: true } },
+      _count: { select: { likes: true, retweets: true, comments: true } },
       likes:
         currentUserId == null ? false : { where: { userId: currentUserId } },
       retweets: {
@@ -163,6 +171,15 @@ async function getInfiniteTweets({
         },
       },
       user: { select: { name: true, id: true, image: true } },
+      comments: {
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          user: { select: { name: true, id: true, image: true } },
+        },
+      },
     },
   });
 
@@ -183,6 +200,11 @@ async function getInfiniteTweets({
       const retweetCreditorName = retweetedByMe
         ? ctx.session?.user.name
         : tweet.retweets[0]?.user.name;
+      const commentedByMe = tweet.comments.find(
+        (comment) => comment.user.id === currentUserId
+      )
+        ? true
+        : false;
 
       const formattedTweet: InfiniteFeedTweet = {
         id: tweet.id,
@@ -194,6 +216,9 @@ async function getInfiniteTweets({
         likedByMe: tweet.likes?.length > 0,
         retweetedByMe,
         retweetCreditorName,
+        comments: tweet.comments,
+        commentCount: tweet._count.comments,
+        commentedByMe,
       };
 
       return formattedTweet;
@@ -210,10 +235,22 @@ export type InfiniteFeedTweet = {
   retweetCount: number;
   user: {
     id: string;
-    name: string | null;
-    image: string | null;
+    name: string | null | undefined;
+    image: string | null | undefined;
   };
   likedByMe: boolean;
   retweetedByMe: boolean;
   retweetCreditorName: string | null | undefined;
+  comments: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    user: {
+      id: string;
+      name: string | null | undefined;
+      image: string | null | undefined;
+    };
+  }[];
+  commentCount: number;
+  commentedByMe: boolean;
 };
