@@ -1,5 +1,6 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { VscAccount, VscHome, VscSignIn, VscSignOut } from "react-icons/vsc";
 
 type SideDrawerProps = {
@@ -8,16 +9,19 @@ type SideDrawerProps = {
 
 export function SideDrawer({ onItemClick }: SideDrawerProps) {
   const session = useSession();
+  const router = useRouter();
   const user = session.data?.user;
 
-  function onSignIn() {
+  async function onSignIn() {
     onItemClick();
-    void signIn();
+    await router.push("/");
+    await signIn();
   }
 
-  function onSignOut() {
+  async function onSignOut() {
     onItemClick();
-    void signOut();
+    await router.push("/");
+    await signOut();
   }
 
   return (
@@ -38,7 +42,7 @@ export function SideDrawer({ onItemClick }: SideDrawerProps) {
       )}
       {user == null ? (
         <li>
-          <button onClick={() => onSignIn()}>
+          <button onClick={() => void onSignIn()}>
             <VscSignIn className="h-7 w-7 fill-green-700" />
             <span className="text-lg font-bold text-green-700">Sign In</span>
           </button>

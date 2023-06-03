@@ -53,7 +53,8 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
         <div className="flex items-center pr-3">
           <div className="ml-4 mt-1 flex-grow">
             <h1 className="text-lg font-bold">{profile.name}</h1>
-            <div className="mb-4 flex flex-row gap-6 text-sm text-gray-500">
+            <div className="text-sm">{profile.email}</div>
+            <div className="mb-4 mt-2 flex flex-row gap-6 text-sm text-gray-500">
               <div>
                 {profile.tweetsCount}{" "}
                 {getPlural(profile.tweetsCount, "Tweet", "Tweets")}
