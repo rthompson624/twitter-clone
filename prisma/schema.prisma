@@ -20,6 +20,7 @@ model Tweet {
   likes     Like[]
   retweets  Retweet[]
   comments  Comment[]
+  images    Image[]
 
   @@unique([createdAt, id])
   @@index([userId])
@@ -36,6 +37,16 @@ model Comment {
 
   @@index([tweetId])
   @@index([userId])
+}
+
+model Image {
+  id        String   @id @default(uuid())
+  tweetId   String
+  tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  url       String
+
+  @@index([tweetId])
 }
 
 model Like {

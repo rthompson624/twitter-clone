@@ -10,10 +10,17 @@ import {
 
 export const tweetRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(z.object({ content: z.string() }))
+    .input(z.object({ content: z.string(), imageUrl: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const tweet = await ctx.prisma.tweet.create({
-        data: { content: input.content, userId: ctx.session.user.id },
+        data: {
+          content: input.content,
+          userId: ctx.session.user.id,
+          images: input.imageUrl
+            ? { create: [{ url: input.imageUrl }] }
+            : undefined,
+        },
+        include: { images: true },
       });
 
       // Revalidate cache of profile page since it is SSG
@@ -180,6 +187,7 @@ async function getInfiniteTweets({
           user: { select: { name: true, id: true, image: true } },
         },
       },
+      images: true,
     },
   });
 
@@ -219,6 +227,7 @@ async function getInfiniteTweets({
         comments: tweet.comments,
         commentCount: tweet._count.comments,
         commentedByMe,
+        images: tweet.images,
       };
 
       return formattedTweet;
@@ -253,4 +262,9 @@ export type InfiniteFeedTweet = {
   }[];
   commentCount: number;
   commentedByMe: boolean;
+  images: {
+    id: string;
+    url: string;
+    createdAt: Date;
+  }[];
 };
