@@ -15,6 +15,7 @@ import { api } from "~/utils/api";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useState } from "react";
 import { type InfiniteFeedTweet } from "~/server/api/routers/tweet";
+import Image from "next/image";
 
 type InfiniteTweetListProps = {
   tweets?: InfiniteFeedTweet[];
@@ -178,6 +179,17 @@ function TweetCard({ tweet }: { tweet: InfiniteFeedTweet }) {
             </div>
           </div>
           <p className="whitespace-pre-wrap">{tweet.content}</p>
+          {tweet.images[0] && (
+            <Image
+              src={tweet.images[0]?.url}
+              alt="Tweet image"
+              quality={100}
+              width={300}
+              height={300}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="my-2"
+            />
+          )}
           <div className="flex gap-9">
             <RetweetButton
               retweetedByMe={tweet.retweetedByMe}
@@ -234,9 +246,7 @@ function LikeButton({
       onClick={onClick}
       disabled={isLoading}
       className={`group -ml-2 flex items-center gap-1 self-start transition-colors duration-200 ${
-        likedByMe
-          ? "text-red-500"
-          : "text-gray-500 hover:text-red-500 focus-visible:text-red-500"
+        likedByMe ? "text-red-500" : "text-gray-500 hover:text-red-500"
       }`}
     >
       <IconHoverEffect color={"red"}>
@@ -244,7 +254,7 @@ function LikeButton({
           className={`transition-colors duration-200 ${
             likedByMe
               ? "fill-red-500"
-              : "fill-gray-500 group-hover:fill-red-500 group-focus-visible:fill-red-500"
+              : "fill-gray-500 group-hover:fill-red-500"
           }`}
         />
       </IconHoverEffect>
@@ -291,7 +301,7 @@ function RetweetButton({
         className={`group -ml-2 flex items-center gap-1 self-start transition-colors duration-200 ${
           retweetedByMe
             ? "text-green-500"
-            : "text-gray-500 hover:text-green-700 focus-visible:text-green-700"
+            : "text-gray-500 hover:text-green-700"
         }`}
       >
         <IconHoverEffect color={"green"}>
@@ -299,7 +309,7 @@ function RetweetButton({
             className={`transition-colors duration-200 ${
               retweetedByMe
                 ? "fill-green-500"
-                : "fill-gray-500 group-hover:fill-green-700 group-focus-visible:fill-green-700"
+                : "fill-gray-500 group-hover:fill-green-700"
             }`}
           />
         </IconHoverEffect>
@@ -351,9 +361,7 @@ function CommentButton({
     <button
       onClick={onClick}
       className={`group -ml-2 flex items-center gap-1 self-start transition-colors duration-200 ${
-        commentedByMe
-          ? "text-blue-500"
-          : "text-gray-500 hover:text-blue-700 focus-visible:text-blue-700"
+        commentedByMe ? "text-blue-500" : "text-gray-500 hover:text-blue-700"
       }`}
     >
       <IconHoverEffect color={"blue"}>
@@ -361,7 +369,7 @@ function CommentButton({
           className={`transition-colors duration-200 ${
             commentedByMe
               ? "fill-blue-500"
-              : "fill-gray-500 group-hover:fill-blue-700 group-focus-visible:fill-blue-700"
+              : "fill-gray-500 group-hover:fill-blue-700"
           }`}
         />
       </IconHoverEffect>
