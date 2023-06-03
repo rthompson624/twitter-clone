@@ -45,12 +45,23 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     async signIn({ user, profile }) {
-      const providerUserImage = (profile as unknown as { image_url: string })
-        .image_url;
-      if (user.id && user.image !== providerUserImage) {
+      const authProviderUserImageUrl = (
+        profile as unknown as { image_url: string }
+      ).image_url;
+      const authProviderUserScreenName = (
+        profile as unknown as { global_name: string }
+      ).global_name;
+      if (
+        user.id &&
+        (user.name !== authProviderUserScreenName ||
+          user.image !== authProviderUserImageUrl)
+      ) {
         await prisma.user.update({
           where: { id: user.id },
-          data: { image: providerUserImage },
+          data: {
+            name: authProviderUserScreenName,
+            image: authProviderUserImageUrl,
+          },
         });
       }
       return true;
