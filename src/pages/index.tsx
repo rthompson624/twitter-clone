@@ -18,19 +18,22 @@ const Home: NextPage = () => {
   return (
     <>
       <header className="sticky top-0 z-10 border-b bg-white pt-2">
-        <h1 className="mb-2 hidden px-4 text-lg font-bold lg:block">Home</h1>
-        <div className="pl-4 pt-2 lg:hidden">
-          <label
-            htmlFor="my-drawer-2"
-            className="flex gap-4 hover:cursor-pointer "
-          >
-            <MdMenu className="h-6 w-6" />
+        <div className="ml-4 hidden lg:block">
+          <div className="flex gap-4">
+            <div className="text-lg font-bold">Home</div>
             {session.status !== "authenticated" && (
-              <div className="mb-5">
-                You are not signed in. Click to sign in.
-              </div>
+              <div className="mb-5">(sign in to post & comment)</div>
             )}
+          </div>
+        </div>
+        <div className="flex gap-4 pl-4 pt-2 lg:hidden">
+          <label htmlFor="my-drawer-2" className="hover:cursor-pointer ">
+            <MdMenu className="h-6 w-6" />
           </label>
+          <div className="text-lg font-bold">Home</div>
+          {session.status !== "authenticated" && (
+            <div className="mb-5">(sign in to post & comment)</div>
+          )}
         </div>
 
         {session.status === "authenticated" && (

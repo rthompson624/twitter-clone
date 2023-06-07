@@ -25,9 +25,6 @@ export const tweetRouter = createTRPCRouter({
         include: { images: true },
       });
 
-      // Revalidate cache of profile page since it is SSG
-      void ctx.revalidateSSG?.(`/profiles/${ctx.session.user.id}`);
-
       // Distribute to other users via Pusher
       const formattedTweet: InfiniteFeedTweet = {
         ...tweet,

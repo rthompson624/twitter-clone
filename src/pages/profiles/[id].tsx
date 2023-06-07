@@ -1,11 +1,4 @@
-import type {
-  GetStaticPaths,
-  GetStaticPropsContext,
-  InferGetStaticPropsType,
-  NextPage,
-} from "next";
-import Head from "next/head";
-import { ssgHelper } from "~/server/api/ssgHelper";
+import type { NextPage } from "next";
 import { api } from "~/utils/api";
 import ErrorPage from "next/error";
 import { InfiniteTweetList } from "~/components/InfiniteTweetList";
@@ -13,15 +6,24 @@ import { useSession } from "next-auth/react";
 import { Button } from "~/components/Button";
 import { MdMenu } from "react-icons/md";
 import { useProfileTweetUpdates } from "~/hooks/useProfileTweetUpdates";
+import { useRouter } from "next/router";
+import Head from "next/head";
+import { LoadingSpinner } from "~/components/LoadingSpinner";
 
-const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
-  id,
-}) => {
-  const { data: profile } = api.profile.getById.useQuery({ id });
+const ProfilePage: NextPage = () => {
+  const router = useRouter();
+  const session = useSession();
+  const id = typeof router.query.id === "string" ? router.query.id : "";
+  const {
+    data: profile,
+    isLoading,
+    isError,
+  } = api.profile.getById.useQuery({ id });
   const infiniteQuery = api.tweet.infiniteProfileFeed.useInfiniteQuery(
     { userId: id },
     { getNextPageParam: (lastPage) => lastPage.nextCursor }
   );
+  useProfileTweetUpdates(id);
   const trpcCtx = api.useContext();
   const toggleFollow = api.profile.toggleFollow.useMutation({
     onSuccess: ({ addedFollow }) => {
@@ -36,39 +38,59 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
       });
     },
   });
-  useProfileTweetUpdates(id);
 
-  if (profile == null || profile.name == null)
-    return <ErrorPage statusCode={404} />;
+  if (isLoading) return <LoadingSpinner />;
+  if (!id || isError || profile == null) return <ErrorPage statusCode={404} />;
 
   return (
     <>
       <Head>
-        <title>{`Bird Is The Word - Profile - ${profile.name}`}</title>
+        <title>{`Bird Is The Word - Profile - ${
+          profile.name ? profile.name : ""
+        }`}</title>
       </Head>
       <header className="sticky top-0 z-10 border-b bg-white pt-2">
-        <h1 className="mb-2 hidden px-4 text-lg font-bold lg:block">Profile</h1>
-        <div className="pl-4 pt-2 lg:hidden">
+        <div className="ml-4 hidden lg:block">
+          <div className="flex gap-4">
+            <div className="text-lg font-bold">Profile</div>
+            {session.status !== "authenticated" && (
+              <div className="mb-5">(sign in to post & comment)</div>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-4 pl-4 pt-2 lg:hidden">
           <label htmlFor="my-drawer-2" className="hover:cursor-pointer">
             <MdMenu className="h-6 w-6" />
           </label>
+          <div className="font-bold text-lg">Profile</div>
+          {session.status !== "authenticated" && (
+            <div className="mb-5">(sign in to post & comment)</div>
+          )}
         </div>
         <div className="flex items-center pr-3">
           <div className="ml-4 mt-1 flex-grow">
             <h1 className="text-lg font-bold">{profile.name}</h1>
             <div className="text-sm">{profile.email}</div>
             <div className="mb-4 mt-2 flex flex-row gap-6 text-sm text-gray-500">
-              <div>
-                {profile.tweetsCount}{" "}
-                {getPlural(profile.tweetsCount, "Tweet", "Tweets")}
+              <div className="flex gap-1">
+                <div className="font-bold text-black">
+                  {profile.followsCount}
+                </div>
+                <div>Following</div>
               </div>
-              <div>
-                {profile.followersCount}{" "}
-                {getPlural(profile.followersCount, "Follower", "Followers")}
+              <div className="flex gap-1">
+                <div className="font-bold text-black">
+                  {profile.followersCount}
+                </div>
+                <div>
+                  {getPlural(profile.followersCount, "Follower", "Followers")}
+                </div>
               </div>
-              <div>
-                {profile.followsCount}
-                {"  Following"}
+              <div className="flex gap-1">
+                <div className="font-bold text-black">
+                  {profile.tweetsCount}
+                </div>
+                <div>{getPlural(profile.tweetsCount, "Tweet", "Tweets")}</div>
               </div>
             </div>
           </div>
@@ -120,37 +142,6 @@ function FollowButton({
 function getPlural(number: number, singular: string, plural: string) {
   const pluralRules = new Intl.PluralRules();
   return pluralRules.select(number) === "one" ? singular : plural;
-}
-
-export const getStaticPaths: GetStaticPaths = () => {
-  return {
-    paths: [],
-    fallback: "blocking",
-  };
-};
-
-export async function getStaticProps(
-  context: GetStaticPropsContext<{ id: string }>
-) {
-  const id = context.params?.id;
-
-  if (id == null) {
-    return {
-      redirect: {
-        destination: "/",
-      },
-    };
-  }
-
-  const ssg = ssgHelper();
-  await ssg.profile.getById.prefetch({ id });
-
-  return {
-    props: {
-      trpcState: ssg.dehydrate(),
-      id,
-    },
-  };
 }
 
 export default ProfilePage;
