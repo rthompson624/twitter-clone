@@ -427,9 +427,9 @@ function CommentForm({ tweet }: { tweet: InfiniteFeedTweet }) {
                       content: newComment.content,
                       createdAt: newComment.createdAt,
                       user: {
-                        id: session.data.user.id,
-                        name: session.data.user.name,
-                        image: session.data.user.image,
+                        id: newComment.user.id,
+                        name: newComment.user.name,
+                        image: newComment.user.image,
                       },
                     },
                   ];

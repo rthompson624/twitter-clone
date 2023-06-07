@@ -12,6 +12,7 @@ import { InfiniteTweetList } from "~/components/InfiniteTweetList";
 import { useSession } from "next-auth/react";
 import { Button } from "~/components/Button";
 import { MdMenu } from "react-icons/md";
+import { useProfileTweetUpdates } from "~/hooks/useProfileTweetUpdates";
 
 const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   id,
@@ -35,6 +36,8 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
       });
     },
   });
+  useProfileTweetUpdates(id);
+
   if (profile == null || profile.name == null)
     return <ErrorPage statusCode={404} />;
 

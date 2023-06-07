@@ -26,7 +26,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
       </Head>
       <div
         data-theme="mytheme"
-        className="container drawer-mobile drawer mx-auto"
+        className="drawer-mobile container drawer mx-auto"
       >
         <input
           ref={checkboxRef}

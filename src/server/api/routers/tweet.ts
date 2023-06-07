@@ -7,6 +7,8 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { pusherServer } from "~/server/ws";
+import { serializeTweet } from "~/utils/helperFunctions";
 
 export const tweetRouter = createTRPCRouter({
   create: protectedProcedure
@@ -25,6 +27,35 @@ export const tweetRouter = createTRPCRouter({
 
       // Revalidate cache of profile page since it is SSG
       void ctx.revalidateSSG?.(`/profiles/${ctx.session.user.id}`);
+
+      // Distribute to other users via Pusher
+      const formattedTweet: InfiniteFeedTweet = {
+        ...tweet,
+        likeCount: 0,
+        likedByMe: false,
+        user: {
+          id: ctx.session.user.id,
+          name: ctx.session.user.name,
+          image: ctx.session.user.image,
+        },
+        retweetCount: 0,
+        retweetedByMe: false,
+        retweetCreditorName: null,
+        comments: [],
+        commentCount: 0,
+        commentedByMe: false,
+      };
+      const tweetFollowers = await ctx.prisma.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: {
+          followers: { select: { id: true, name: true, image: true } },
+        },
+      });
+      const eventData: NewTweetEventData = {
+        serializedTweet: serializeTweet(formattedTweet),
+        followers: tweetFollowers ? tweetFollowers.followers : [],
+      };
+      await pusherServer.trigger("channel.tweet", "tweet.new", eventData);
 
       return tweet;
     }),
@@ -94,19 +125,34 @@ export const tweetRouter = createTRPCRouter({
       const existingLike = await ctx.prisma.like.findUnique({
         where: { userId_tweetId: { tweetId: id, userId: ctx.session.user.id } },
       });
+      let liked: boolean;
       if (existingLike == null) {
         await ctx.prisma.like.create({
           data: { tweetId: id, userId: ctx.session.user.id },
         });
-        return { liked: true };
+        liked = true;
       } else {
         await ctx.prisma.like.delete({
           where: {
             userId_tweetId: { tweetId: id, userId: ctx.session.user.id },
           },
         });
-        return { liked: false };
+        liked = false;
       }
+
+      // Distribute to other users via Pusher
+      const eventData: UpdateTweetLikesEventData = {
+        tweetId: id,
+        userId: ctx.session.user.id,
+        liked,
+      };
+      await pusherServer.trigger(
+        "channel.tweet",
+        "tweet.update.likes",
+        eventData
+      );
+
+      return { liked };
     }),
   toggleRetweet: protectedProcedure
     .input(z.object({ tweetId: z.string() }))
@@ -114,24 +160,61 @@ export const tweetRouter = createTRPCRouter({
       const existingRetweet = await ctx.prisma.retweet.findUnique({
         where: { userId_tweetId: { userId: ctx.session.user.id, tweetId } },
       });
+      let retweeted: boolean;
       if (existingRetweet == null) {
         await ctx.prisma.retweet.create({
           data: { tweetId, userId: ctx.session.user.id },
         });
-        return { retweeted: true };
+        retweeted = true;
       } else {
         await ctx.prisma.retweet.delete({
           where: { userId_tweetId: { userId: ctx.session.user.id, tweetId } },
         });
-        return { retweeted: false };
+        retweeted = false;
       }
+
+      // Distribute to other users via Pusher
+      const eventData: UpdateTweetRetweetsEventData = {
+        tweetId,
+        userId: ctx.session.user.id,
+        retweeted,
+      };
+      await pusherServer.trigger(
+        "channel.tweet",
+        "tweet.update.retweets",
+        eventData
+      );
+
+      return { retweeted };
     }),
   createComment: protectedProcedure
     .input(z.object({ content: z.string(), tweetId: z.string() }))
     .mutation(async ({ input: { content, tweetId }, ctx }) => {
       const comment = await ctx.prisma.comment.create({
         data: { userId: ctx.session.user.id, tweetId, content },
+        include: { user: { select: { id: true, name: true, image: true } } },
       });
+
+      // Distribute to other users via Pusher
+      const eventData: NewCommentEventData = {
+        serializedComment: {
+          id: comment.id,
+          tweetId,
+          createdAt: comment.createdAt.toISOString(),
+          content: comment.content,
+          user: {
+            id: comment.user.id,
+            name: comment.user.name,
+            image: comment.user.image,
+          },
+        },
+      };
+      await pusherServer.trigger(
+        "channel.tweet",
+        "tweet.update.comments",
+        eventData
+      );
+
       return comment;
     }),
 });
@@ -267,4 +350,86 @@ export type InfiniteFeedTweet = {
     url: string;
     createdAt: Date;
   }[];
+};
+
+export type InfiniteFeedTweetSerialized = {
+  id: string;
+  content: string;
+  createdAt: string;
+  likeCount: number;
+  retweetCount: number;
+  user: {
+    id: string;
+    name: string | null | undefined;
+    image: string | null | undefined;
+  };
+  likedByMe: boolean;
+  retweetedByMe: boolean;
+  retweetCreditorName: string | null | undefined;
+  comments: {
+    id: string;
+    content: string;
+    createdAt: string;
+    user: {
+      id: string;
+      name: string | null | undefined;
+      image: string | null | undefined;
+    };
+  }[];
+  commentCount: number;
+  commentedByMe: boolean;
+  images: {
+    id: string;
+    url: string;
+    createdAt: string;
+  }[];
+};
+
+export type NewTweetEventData = {
+  serializedTweet: InfiniteFeedTweetSerialized;
+  followers: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  }[];
+};
+
+export type UpdateTweetLikesEventData = {
+  tweetId: string;
+  userId: string;
+  liked: boolean;
+};
+
+export type UpdateTweetRetweetsEventData = {
+  tweetId: string;
+  userId: string;
+  retweeted: boolean;
+};
+
+export type NewComment = {
+  id: string;
+  tweetId: string;
+  createdAt: Date;
+  content: string;
+  user: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+};
+
+export type NewCommentSerialized = {
+  id: string;
+  tweetId: string;
+  createdAt: string;
+  content: string;
+  user: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+};
+
+export type NewCommentEventData = {
+  serializedComment: NewCommentSerialized;
 };
