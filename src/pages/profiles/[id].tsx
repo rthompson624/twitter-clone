@@ -17,6 +17,7 @@ import { useProfileTweetUpdates } from "~/hooks/useProfileTweetUpdates";
 const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   id,
 }) => {
+  const session = useSession();
   const { data: profile } = api.profile.getById.useQuery({ id });
   const infiniteQuery = api.tweet.infiniteProfileFeed.useInfiniteQuery(
     { userId: id },
@@ -47,28 +48,47 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
         <title>{`Bird Is The Word - Profile - ${profile.name}`}</title>
       </Head>
       <header className="sticky top-0 z-10 border-b bg-white pt-2">
-        <h1 className="mb-2 hidden px-4 text-lg font-bold lg:block">Profile</h1>
-        <div className="pl-4 pt-2 lg:hidden">
+        <div className="ml-4 hidden lg:block">
+          <div className="flex gap-4">
+            <div className="text-lg font-bold">Profile</div>
+            {session.status !== "authenticated" && (
+              <div className="mb-5">(sign in to post & comment)</div>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-4 pl-4 pt-2 lg:hidden">
           <label htmlFor="my-drawer-2" className="hover:cursor-pointer">
             <MdMenu className="h-6 w-6" />
           </label>
+          <div className="font-bold">Profile</div>
+          {session.status !== "authenticated" && (
+            <div className="mb-5">(sign in to post & comment)</div>
+          )}
         </div>
         <div className="flex items-center pr-3">
           <div className="ml-4 mt-1 flex-grow">
             <h1 className="text-lg font-bold">{profile.name}</h1>
             <div className="text-sm">{profile.email}</div>
             <div className="mb-4 mt-2 flex flex-row gap-6 text-sm text-gray-500">
-              <div>
-                {profile.tweetsCount}{" "}
-                {getPlural(profile.tweetsCount, "Tweet", "Tweets")}
+              <div className="flex gap-1">
+                <div className="font-bold text-black">
+                  {profile.followsCount}
+                </div>
+                <div>Following</div>
               </div>
-              <div>
-                {profile.followersCount}{" "}
-                {getPlural(profile.followersCount, "Follower", "Followers")}
+              <div className="flex gap-1">
+                <div className="font-bold text-black">
+                  {profile.followersCount}
+                </div>
+                <div>
+                  {getPlural(profile.followersCount, "Follower", "Followers")}
+                </div>
               </div>
-              <div>
-                {profile.followsCount}
-                {"  Following"}
+              <div className="flex gap-1">
+                <div className="font-bold text-black">
+                  {profile.tweetsCount}
+                </div>
+                <div>{getPlural(profile.tweetsCount, "Tweet", "Tweets")}</div>
               </div>
             </div>
           </div>

@@ -191,6 +191,11 @@ function TweetCard({ tweet }: { tweet: InfiniteFeedTweet }) {
             />
           )}
           <div className="flex gap-9">
+            <CommentButton
+              commentedByMe={tweet.commentedByMe}
+              commentCount={tweet.commentCount}
+              onClick={handleToggleComment}
+            />
             <RetweetButton
               retweetedByMe={tweet.retweetedByMe}
               retweetCount={tweet.retweetCount}
@@ -202,11 +207,6 @@ function TweetCard({ tweet }: { tweet: InfiniteFeedTweet }) {
               likeCount={tweet.likeCount}
               isLoading={toggleLike.isLoading}
               onClick={handleToggleLike}
-            />
-            <CommentButton
-              commentedByMe={tweet.commentedByMe}
-              commentCount={tweet.commentCount}
-              onClick={handleToggleComment}
             />
           </div>
         </div>
