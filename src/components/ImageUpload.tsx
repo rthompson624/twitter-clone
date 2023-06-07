@@ -33,10 +33,8 @@ export function ImageUpload({ onUrlReady, reset }: ImageUploadProps) {
         method: "POST",
         body: formData,
       });
-      if (upload.ok) {
-        console.log("Uploaded successfully!");
-      } else {
-        console.error("Upload failed.");
+      if (!upload.ok) {
+        console.error("Upload to S3 bucket failed.");
       }
       const fileName = fields.key ? fields.key : "";
       onUrlReady(`${url}/${fileName}`);

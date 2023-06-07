@@ -58,10 +58,6 @@ export const profileRouter = createTRPCRouter({
         addedFollow = false;
       }
 
-      // Revalidate cache of profile page since it is SSG
-      void ctx.revalidateSSG?.(`/profiles/${userId}`);
-      void ctx.revalidateSSG?.(`/profiles/${currentUserId}`);
-
       return { addedFollow };
     }),
 });
