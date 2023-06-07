@@ -5,6 +5,7 @@ import { NewTweetForm } from "~/components/NewTweetForm";
 import { api } from "~/utils/api";
 import { useState } from "react";
 import { MdMenu } from "react-icons/md";
+import { useTweetUpdates } from "~/hooks/useTweetUpdates";
 
 type TabOption = "For you" | "Following";
 const TABS: TabOption[] = ["For you", "Following"];
@@ -12,6 +13,8 @@ const TABS: TabOption[] = ["For you", "Following"];
 const Home: NextPage = () => {
   const [selectedTab, setSelectedTab] = useState<TabOption>("For you");
   const session = useSession();
+  useTweetUpdates();
+
   return (
     <>
       <header className="sticky top-0 z-10 border-b bg-white pt-2">

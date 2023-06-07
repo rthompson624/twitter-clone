@@ -49,10 +49,6 @@ export function NewTweetForm() {
         };
       };
       trpcCtx.tweet.infiniteFeed.setInfiniteData({}, updater);
-      trpcCtx.tweet.infiniteFeed.setInfiniteData(
-        { onlyFollowing: true },
-        updater
-      );
     },
   });
 

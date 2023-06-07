@@ -12,6 +12,7 @@ import { InfiniteTweetList } from "~/components/InfiniteTweetList";
 import { useSession } from "next-auth/react";
 import { Button } from "~/components/Button";
 import { MdMenu } from "react-icons/md";
+import { useProfileTweetUpdates } from "~/hooks/useProfileTweetUpdates";
 
 const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   id,
@@ -35,13 +36,15 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
       });
     },
   });
+  useProfileTweetUpdates(id);
+
   if (profile == null || profile.name == null)
     return <ErrorPage statusCode={404} />;
 
   return (
     <>
       <Head>
-        <title>{`Twitter Clone - ${profile.name}`}</title>
+        <title>{`Bird Is The Word - Profile - ${profile.name}`}</title>
       </Head>
       <header className="sticky top-0 z-10 border-b bg-white pt-2">
         <h1 className="mb-2 hidden px-4 text-lg font-bold lg:block">Profile</h1>
