@@ -62,7 +62,7 @@ const ProfilePage: NextPage = () => {
           <label htmlFor="my-drawer-2" className="hover:cursor-pointer">
             <MdMenu className="h-6 w-6" />
           </label>
-          <div className="font-bold">Profile</div>
+          <div className="font-bold text-lg">Profile</div>
           {session.status !== "authenticated" && (
             <div className="mb-5">(sign in to post & comment)</div>
           )}
