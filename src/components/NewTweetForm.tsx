@@ -73,6 +73,7 @@ export function NewTweetForm() {
           onChange={(e) => setInputValue(e.target.value)}
           className="h-20 grow overflow-y-auto text-lg outline-none"
           placeholder="What's happening?"
+          id="content"
         />
       </div>
       <div className="flex justify-between">

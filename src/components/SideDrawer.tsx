@@ -2,6 +2,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { VscAccount, VscHome, VscSignIn, VscSignOut } from "react-icons/vsc";
+import { HiOutlineUsers } from "react-icons/hi2";
 
 type SideDrawerProps = {
   onItemClick: () => void;
@@ -40,6 +41,12 @@ export function SideDrawer({ onItemClick }: SideDrawerProps) {
           </Link>
         </li>
       )}
+      <li>
+        <Link href={`/profiles`} onClick={() => onItemClick()}>
+          <HiOutlineUsers className="h-7 w-7" />
+          <span className="text-lg font-bold">Users</span>
+        </Link>
+      </li>
       {user == null ? (
         <li>
           <button onClick={() => void onSignIn()}>
