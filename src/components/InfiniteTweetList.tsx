@@ -316,14 +316,14 @@ function RetweetButton({
         <span>{retweetCount}</span>
       </button>
       {showMenu && (
-        <ul className="menu rounded-box absolute -left-16 top-0 z-10 w-44 bg-base-100">
-          <li className="bg-gray-100">
+        <ul className="menu rounded-box absolute -left-16 top-0 z-10 w-32 bg-base-100">
+          <li className="border-2 border-gray-300 bg-white">
             <a onClick={() => toggleRetweet()}>
               <VscGitCompare />
-              {retweetedByMe ? "Undo Retweet" : "Retweet"}
+              {retweetedByMe ? "Untweet" : "Retweet"}
             </a>
           </li>
-          <li>
+          <li className="border-x-2 border-b-2 border-gray-300 bg-white">
             <a onClick={() => setShowMenu(!showMenu)}>
               <VscClose />
               Cancel
@@ -489,6 +489,7 @@ function CommentForm({ tweet }: { tweet: InfiniteFeedTweet }) {
           type="text"
           placeholder="Write a comment..."
           className="bor input-ghost input h-8 w-full bg-slate-100 px-2 focus:text-black focus:outline-none"
+          id="comment"
         />
         <div
           onClick={() => submitComment()}
