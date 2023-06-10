@@ -75,7 +75,7 @@ const Profiles: NextPage = () => {
         </div>
       </header>
       <main>
-        <div className="pt-2">
+        <div className="pb-5 pt-2">
           <InfiniteProfileList
             profiles={infiniteQuery.data?.pages.flatMap(
               (page) => page.profiles
