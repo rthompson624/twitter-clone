@@ -14,7 +14,7 @@ datasource db {
 model Tweet {
   id        String    @id @default(uuid())
   userId    String
-  content   String
+  content   String    @db.Text
   createdAt DateTime  @default(now())
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes     Like[]
@@ -33,7 +33,7 @@ model Comment {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-  content   String
+  content   String   @db.Text
 
   @@index([tweetId])
   @@index([userId])
