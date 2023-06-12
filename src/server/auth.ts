@@ -5,6 +5,7 @@ import {
   type DefaultSession,
 } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
@@ -45,30 +46,46 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     async signIn({ user, profile }) {
-      const authProviderUserImageUrl = (
-        profile as unknown as { image_url: string }
-      ).image_url;
-      const authProviderUserScreenName = (
-        profile as unknown as { global_name: string }
-      ).global_name;
-      if (
-        user.id &&
-        (user.name !== authProviderUserScreenName ||
-          user.image !== authProviderUserImageUrl)
-      ) {
-        await prisma.user.update({
+      const { name, image } = getNameAndImage(profile as ProfileAmalgam);
+      if (user.id) {
+        const userRecord = await prisma.user.findUnique({
           where: { id: user.id },
-          data: {
-            name: authProviderUserScreenName,
-            image: authProviderUserImageUrl,
-          },
         });
+        if (userRecord) {
+          if (name && user.name !== name) {
+            if (image && user.image !== image) {
+              // Update name and image
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { name, image },
+              });
+            } else {
+              // Update name
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { name },
+              });
+            }
+          } else {
+            if (image && user.image !== image) {
+              // Update image
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { image },
+              });
+            }
+          }
+        }
       }
       return true;
     },
   },
   adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+    }),
     DiscordProvider({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
@@ -95,4 +112,33 @@ export const getServerAuthSession = (ctx: {
   res: GetServerSidePropsContext["res"];
 }) => {
   return getServerSession(ctx.req, ctx.res, authOptions);
+};
+
+function getNameAndImage(profile: ProfileAmalgam): NameAndImage {
+  let name: string | undefined;
+  let image: string | undefined;
+  if (profile.iss) {
+    // Google
+    name = profile.name;
+    image = profile.picture;
+  } else {
+    // Discord
+    name = profile.global_name ? profile.global_name : profile.username;
+    image = profile.image_url;
+  }
+  return { name, image };
+}
+
+type NameAndImage = {
+  name: string | undefined;
+  image: string | undefined;
+};
+
+type ProfileAmalgam = {
+  iss?: string;
+  username?: string;
+  global_name?: string;
+  image_url?: string;
+  name?: string;
+  picture?: string;
 };
