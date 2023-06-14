@@ -49,20 +49,18 @@ export function TweetCard({
               {dateTimeFormatter.format(tweet.createdAt)}
             </div>
           </div>
-          <Link href={`/tweets/${tweet.id}`}>
-            <p className="whitespace-pre-wrap">{tweet.content}</p>
-            {tweet.images[0] && (
-              <Image
-                src={tweet.images[0]?.url}
-                alt="Tweet image"
-                quality={100}
-                width={300}
-                height={300}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="my-2"
-              />
-            )}
-          </Link>
+          <p className="whitespace-pre-wrap">{tweet.content}</p>
+          {tweet.images[0] && (
+            <Image
+              src={tweet.images[0]?.url}
+              alt="Tweet image"
+              quality={100}
+              width={300}
+              height={300}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="my-2"
+            />
+          )}
           <div className="flex gap-9">
             <CommentButton
               commentedByMe={tweet.commentedByMe}
