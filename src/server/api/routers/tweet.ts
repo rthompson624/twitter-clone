@@ -11,6 +11,85 @@ import { pusherServer } from "~/server/ws";
 import { serializeTweet } from "~/utils/helperFunctions";
 
 export const tweetRouter = createTRPCRouter({
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input: { id }, ctx }) => {
+      const currentUserId = ctx.session?.user.id;
+      const tweet = await ctx.prisma.tweet.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          _count: { select: { likes: true, retweets: true, comments: true } },
+          likes:
+            currentUserId == null
+              ? false
+              : { where: { userId: currentUserId } },
+          retweets: {
+            where: {
+              OR: [
+                { userId: currentUserId },
+                { user: { followers: { some: { id: currentUserId } } } },
+              ],
+            },
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          user: { select: { name: true, id: true, image: true } },
+          comments: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              user: { select: { name: true, id: true, image: true } },
+            },
+          },
+          images: true,
+        },
+      });
+
+      if (tweet == null) return;
+
+      const retweetedByMe = tweet.retweets.find(
+        (retweet) => retweet.user.id === currentUserId
+      )
+        ? true
+        : false;
+      const retweetCreditorName = retweetedByMe
+        ? ctx.session?.user.name
+        : tweet.retweets[0]?.user.name;
+      const commentedByMe = tweet.comments.find(
+        (comment) => comment.user.id === currentUserId
+      )
+        ? true
+        : false;
+
+      const formattedTweet: InfiniteFeedTweet = {
+        id: tweet.id,
+        content: tweet.content,
+        createdAt: tweet.createdAt,
+        likeCount: tweet._count.likes,
+        retweetCount: tweet._count.retweets,
+        user: tweet.user,
+        likedByMe: tweet.likes?.length > 0,
+        retweetedByMe,
+        retweetCreditorName,
+        comments: tweet.comments,
+        commentCount: tweet._count.comments,
+        commentedByMe,
+        images: tweet.images,
+      };
+
+      return formattedTweet;
+    }),
   create: protectedProcedure
     .input(z.object({ content: z.string(), imageUrl: z.string() }))
     .mutation(async ({ input, ctx }) => {
