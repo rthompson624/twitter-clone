@@ -4,6 +4,8 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { pusherServer } from "~/server/ws";
+import { serializeNotification } from "~/utils/helperFunctions";
 
 export const profileRouter = createTRPCRouter({
   getById: publicProcedure
@@ -54,6 +56,30 @@ export const profileRouter = createTRPCRouter({
           data: { followers: { connect: { id: currentUserId } } },
         });
         addedFollow = true;
+        // Handle notification
+        const notification = await ctx.prisma.notification.create({
+          data: {
+            notifyeeId: userId,
+            notifyerId: currentUserId,
+            resourcePath: "profiles",
+            resourceId: currentUserId,
+            type: "NEW_FOLLOWER",
+          },
+          select: {
+            id: true,
+            notifyee: true,
+            notifyer: true,
+            resourcePath: true,
+            resourceId: true,
+            type: true,
+            createdAt: true,
+          },
+        });
+        await pusherServer.trigger(
+          "channel.notification",
+          "notification.new",
+          serializeNotification(notification)
+        );
       } else {
         await ctx.prisma.user.update({
           where: { id: userId },

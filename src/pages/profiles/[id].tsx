@@ -9,6 +9,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { LoadingSpinner } from "~/components/LoadingSpinner";
 import { ProfileCard } from "~/components/ProfileCard";
+import { NotificationInbox } from "~/components/NotificationInbox";
 
 const ProfilePage: NextPage = () => {
   const router = useRouter();
@@ -39,7 +40,11 @@ const ProfilePage: NextPage = () => {
         <div className="ml-4 hidden pb-2 lg:block">
           <div className="flex gap-4">
             <div className="text-lg font-bold">Profile</div>
-            {session.status !== "authenticated" && (
+            {session.status === "authenticated" ? (
+              <div className="flex flex-grow flex-row-reverse pr-6 pt-2">
+                <NotificationInbox />
+              </div>
+            ) : (
               <div className="mb-5">(sign in to post & comment)</div>
             )}
           </div>
@@ -49,7 +54,11 @@ const ProfilePage: NextPage = () => {
             <MdMenu className="h-6 w-6" />
           </label>
           <div className="text-lg font-bold">Profile</div>
-          {session.status !== "authenticated" && (
+          {session.status === "authenticated" ? (
+            <div className="flex flex-grow flex-row-reverse pr-6">
+              <NotificationInbox />
+            </div>
+          ) : (
             <div className="mb-5">(sign in to post & comment)</div>
           )}
         </div>

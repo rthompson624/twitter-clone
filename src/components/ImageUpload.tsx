@@ -94,7 +94,7 @@ export function ImageUpload({ onUrlReady, reset }: ImageUploadProps) {
           <IconHoverEffect color={"blue"}>
             <VscDeviceCamera
               onClick={() => fileInputRef.current?.click()}
-              className="h-5 w-5 cursor-pointer fill-gray-500 transition-colors duration-200 group-hover:fill-blue-700"
+              className="h-7 w-7 cursor-pointer fill-gray-500 transition-colors duration-200 group-hover:fill-blue-700"
             />
           </IconHoverEffect>
           <input

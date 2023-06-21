@@ -71,6 +71,30 @@ model Retweet {
   @@index([tweetId])
 }
 
+enum NotificationType {
+  TWEET_COMMENT
+  TWEET_LIKE
+  TWEET_RETWEET
+  SIBLING_COMMENT
+  NEW_FOLLOWER
+}
+
+model Notification {
+  id           String           @id @default(uuid())
+  notifyeeId   String
+  notifyerId   String
+  resourcePath String
+  resourceId   String
+  type         NotificationType
+  notifyee     User             @relation(name: "Notifyee", fields: [notifyeeId], references: [id], onDelete: Cascade)
+  notifyer     User             @relation(name: "Notifyer", fields: [notifyerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime         @default(now())
+
+  @@unique([notifyeeId, type, resourceId])
+  @@index([notifyeeId])
+  @@index([notifyerId])
+}
+
 // Necessary for Next auth
 model Account {
   id                String  @id @default(cuid())
@@ -111,12 +135,14 @@ model User {
   sessions      Session[]
 
   // Not related to Next Auth
-  tweets    Tweet[]
-  likes     Like[]
-  followers User[]    @relation(name: "Followers")
-  follows   User[]    @relation(name: "Followers")
-  retweets  Retweet[]
-  comments  Comment[]
+  tweets                Tweet[]
+  likes                 Like[]
+  followers             User[]         @relation(name: "Followers")
+  follows               User[]         @relation(name: "Followers")
+  retweets              Retweet[]
+  comments              Comment[]
+  notificationsReceived Notification[] @relation(name: "Notifyee")
+  notificationsCreated  Notification[] @relation(name: "Notifyer")
 }
 
 model VerificationToken {
