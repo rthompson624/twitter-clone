@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { NotificationType, Prisma } from "@prisma/client";
 import type { inferAsyncReturnType } from "@trpc/server";
 import { z } from "zod";
 import type { createTRPCContext } from "~/server/api/trpc";
@@ -8,7 +8,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { pusherServer } from "~/server/ws";
-import { serializeTweet } from "~/utils/helperFunctions";
+import { serializeNotification, serializeTweet } from "~/utils/helperFunctions";
 
 export const tweetRouter = createTRPCRouter({
   getById: publicProcedure
@@ -207,6 +207,24 @@ export const tweetRouter = createTRPCRouter({
           data: { tweetId: id, userId: ctx.session.user.id },
         });
         liked = true;
+        // Handle notification
+        const tweet = await ctx.prisma.tweet.findUnique({ where: { id } });
+        if (tweet != null) {
+          if (tweet.userId !== ctx.session.user.id) {
+            const notification = await upsertTweetNotification(
+              tweet.userId,
+              "TWEET_LIKE",
+              tweet.id,
+              ctx.session.user.id,
+              ctx
+            );
+            await pusherServer.trigger(
+              "channel.notification",
+              "notification.new",
+              serializeNotification(notification)
+            );
+          }
+        }
       } else {
         await ctx.prisma.like.delete({
           where: {
@@ -242,6 +260,26 @@ export const tweetRouter = createTRPCRouter({
           data: { tweetId, userId: ctx.session.user.id },
         });
         retweeted = true;
+        // Handle notification
+        const tweet = await ctx.prisma.tweet.findUnique({
+          where: { id: tweetId },
+        });
+        if (tweet != null) {
+          if (tweet.userId !== ctx.session.user.id) {
+            const notification = await upsertTweetNotification(
+              tweet.userId,
+              "TWEET_RETWEET",
+              tweet.id,
+              ctx.session.user.id,
+              ctx
+            );
+            await pusherServer.trigger(
+              "channel.notification",
+              "notification.new",
+              serializeNotification(notification)
+            );
+          }
+        }
       } else {
         await ctx.prisma.retweet.delete({
           where: { userId_tweetId: { userId: ctx.session.user.id, tweetId } },
@@ -270,6 +308,43 @@ export const tweetRouter = createTRPCRouter({
         data: { userId: ctx.session.user.id, tweetId, content },
         include: { user: { select: { id: true, name: true, image: true } } },
       });
+      // Handle notifications
+      const tweet = await ctx.prisma.tweet.findUnique({
+        where: { id: tweetId },
+        include: { comments: true },
+      });
+      if (tweet != null) {
+        // Notification for tweet owner
+        if (tweet.userId !== ctx.session.user.id) {
+          const notification = await upsertTweetNotification(
+            tweet.userId,
+            "TWEET_COMMENT",
+            tweet.id,
+            ctx.session.user.id,
+            ctx
+          );
+          await pusherServer.trigger(
+            "channel.notification",
+            "notification.new",
+            serializeNotification(notification)
+          );
+        }
+        // Notification for sibling tweet commentors
+        const otherCommentorIds = [
+          ...new Set(tweet.comments.map((comment) => comment.userId)),
+        ].filter((id) => id !== tweet.userId && id !== ctx.session.user.id);
+        for (const commentorId of otherCommentorIds) {
+          const notification = await upsertTweetNotification(
+            commentorId,
+            "SIBLING_COMMENT",
+            tweet.id,
+            ctx.session.user.id,
+            ctx
+          );
+          // TODO: Distribute to other users via Pusher
+          console.log(notification);
+        }
+      }
 
       // Distribute to other users via Pusher
       const eventData: NewCommentEventData = {
@@ -393,6 +468,43 @@ async function getInfiniteTweets({
     }),
     nextCursor,
   };
+}
+
+async function upsertTweetNotification(
+  notifyeeId: string,
+  type: NotificationType,
+  resourceId: string,
+  notifyerId: string,
+  ctx: inferAsyncReturnType<typeof createTRPCContext>
+) {
+  return await ctx.prisma.notification.upsert({
+    where: {
+      notifyeeId_type_resourceId: {
+        notifyeeId,
+        type,
+        resourceId,
+      },
+    },
+    update: {
+      notifyerId,
+    },
+    create: {
+      notifyeeId,
+      notifyerId,
+      resourcePath: "tweets",
+      resourceId,
+      type,
+    },
+    select: {
+      id: true,
+      notifyee: true,
+      notifyer: true,
+      resourcePath: true,
+      resourceId: true,
+      type: true,
+      createdAt: true,
+    },
+  });
 }
 
 export type InfiniteFeedTweet = {

@@ -1,3 +1,4 @@
+import { type NotificationWithRelations } from "~/server/api/routers/notification";
 import type {
   InfiniteFeedTweet,
   InfiniteFeedTweetSerialized,
@@ -45,4 +46,29 @@ export function serializeComment(comment: NewComment): NewCommentSerialized {
 
 export function deserializeComment(comment: NewCommentSerialized): NewComment {
   return { ...comment, createdAt: new Date(Date.parse(comment.createdAt)) };
+}
+
+export function serializeNotification(notification: NotificationWithRelations) {
+  return { ...notification, createdAt: notification.createdAt.toISOString() };
+}
+
+export type NotificationWithRelationsSerialized = ReturnType<
+  typeof serializeNotification
+>;
+
+export function deserializeNotification(
+  notification: NotificationWithRelationsSerialized
+): NotificationWithRelations {
+  return {
+    ...notification,
+    createdAt: new Date(Date.parse(notification.createdAt)),
+  };
+}
+
+export const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "short",
+});
+
+export function forceString(value: string | null): string {
+  return value ? value : "";
 }

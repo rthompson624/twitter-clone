@@ -16,6 +16,7 @@ import { IconHoverEffect } from "./IconHoverEffect";
 import { useToggleLike } from "~/hooks/useToggleLike";
 import { useToggleRetweet } from "~/hooks/useToggleRetweet";
 import { useCreateComment } from "~/hooks/useCreateComment";
+import { dateTimeFormatter } from "~/utils/helperFunctions";
 
 export function TweetCard({
   tweet,
@@ -106,7 +107,7 @@ function LikeButton({
   if (session.status !== "authenticated") {
     return (
       <div className="mb-1 mt-1 flex items-center gap-3 self-start text-gray-500">
-        <HeartIcon />
+        <HeartIcon className="h-5 w-5" />
         <span>{likeCount}</span>
       </div>
     );
@@ -122,7 +123,7 @@ function LikeButton({
     >
       <IconHoverEffect color={"red"}>
         <HeartIcon
-          className={`transition-colors duration-200 ${
+          className={`h-5 w-5 transition-colors duration-200 ${
             likedByMe
               ? "fill-red-500"
               : "fill-gray-500 group-hover:fill-red-500"
@@ -153,7 +154,7 @@ function RetweetButton({
   if (session.status !== "authenticated") {
     return (
       <div className="mb-1 mt-1 flex items-center gap-3 self-start text-gray-500">
-        <VscGitCompare />
+        <VscGitCompare className="h-5 w-5" />
         <span>{retweetCount}</span>
       </div>
     );
@@ -177,7 +178,7 @@ function RetweetButton({
       >
         <IconHoverEffect color={"green"}>
           <VscGitCompare
-            className={`transition-colors duration-200 ${
+            className={`h-5 w-5 transition-colors duration-200 ${
               retweetedByMe
                 ? "fill-green-500"
                 : "fill-gray-500 group-hover:fill-green-700"
@@ -190,13 +191,13 @@ function RetweetButton({
         <ul className="menu rounded-box absolute -left-16 top-0 z-10 w-32 bg-base-100">
           <li className="border-2 border-gray-300 bg-white">
             <a onClick={() => toggleRetweet()}>
-              <VscGitCompare />
+              <VscGitCompare className="h-5 w-5" />
               {retweetedByMe ? "Untweet" : "Retweet"}
             </a>
           </li>
           <li className="border-x-2 border-b-2 border-gray-300 bg-white">
             <a onClick={() => setShowMenu(!showMenu)}>
-              <VscClose />
+              <VscClose className="h-5 w-5" />
               Cancel
             </a>
           </li>
@@ -222,7 +223,7 @@ function CommentButton({
   if (session.status !== "authenticated") {
     return (
       <div className="mb-1 mt-1 flex items-center gap-3 self-start text-gray-500">
-        <VscComment />
+        <VscComment className="h-5 w-5" />
         <span>{commentCount}</span>
       </div>
     );
@@ -237,7 +238,7 @@ function CommentButton({
     >
       <IconHoverEffect color={"blue"}>
         <VscComment
-          className={`transition-colors duration-200 ${
+          className={`h-5 w-5 transition-colors duration-200 ${
             commentedByMe
               ? "fill-blue-500"
               : "fill-gray-500 group-hover:fill-blue-700"
@@ -317,7 +318,3 @@ function CommentForm({ tweet }: { tweet: InfiniteFeedTweet }) {
     </div>
   );
 }
-
-const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "short",
-});
