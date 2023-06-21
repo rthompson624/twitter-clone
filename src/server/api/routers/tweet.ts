@@ -341,8 +341,11 @@ export const tweetRouter = createTRPCRouter({
             ctx.session.user.id,
             ctx
           );
-          // TODO: Distribute to other users via Pusher
-          console.log(notification);
+          await pusherServer.trigger(
+            "channel.notification",
+            "notification.new",
+            serializeNotification(notification)
+          );
         }
       }
 
