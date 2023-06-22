@@ -24,11 +24,15 @@ const MyApp: AppType<{ session: Session | null }> = ({
         <Head>
           <title>Bird Is The Word</title>
           <meta name="description" content="This is a social media app" />
+          <meta
+            name="google-site-verification"
+            content="j9EX4K5jDJS3JElBIr78Ims6q_idnfeQ5QKCUHQ-yBk"
+          />
           <link rel="icon" href="/favicon.ico" />
         </Head>
         <div
           data-theme="mytheme"
-          className="container drawer-mobile drawer mx-auto max-w-xl lg:max-w-3xl"
+          className="drawer-mobile container drawer mx-auto max-w-xl lg:max-w-3xl"
         >
           <input
             ref={checkboxRef}
