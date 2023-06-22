@@ -1,7 +1,6 @@
 import { useSession } from "next-auth/react";
-import Pusher from "pusher-js";
 import { useEffect } from "react";
-import { env } from "~/env.mjs";
+import { usePusher } from "~/context/PusherContext";
 import type {
   NewCommentEventData,
   NewTweetEventData,
@@ -15,10 +14,8 @@ export function useTweetUpdates() {
   const session = useSession();
   const currentUserId = session.data?.user.id;
   const trpcCtx = api.useContext();
+  const pusher = usePusher();
   useEffect(() => {
-    const pusher = new Pusher(env.NEXT_PUBLIC_PUSHER_KEY, {
-      cluster: env.NEXT_PUBLIC_PUSHER_CLUSTER,
-    });
     const channel = pusher.subscribe("channel.tweet");
     channel.bind(
       "tweet.new",
@@ -181,5 +178,5 @@ export function useTweetUpdates() {
     return () => {
       pusher.unsubscribe("channel.tweet");
     };
-  }, [trpcCtx, currentUserId]);
+  }, [trpcCtx, currentUserId, pusher]);
 }
