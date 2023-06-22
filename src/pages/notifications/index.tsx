@@ -1,38 +1,33 @@
-import type { NextPage } from "next";
-import { api } from "~/utils/api";
+import { type NextPage } from "next";
 import ErrorPage from "next/error";
+import Head from "next/head";
 import { useSession } from "next-auth/react";
 import { MdMenu } from "react-icons/md";
-import { useRouter } from "next/router";
-import Head from "next/head";
-import { LoadingSpinner } from "~/components/LoadingSpinner";
-import { TweetCard } from "~/components/TweetCard";
-import { useTweetDetailUpdates } from "~/hooks/useTweetDetailUpdates";
 import { NotificationInbox } from "~/components/NotificationInbox";
+import { api } from "~/utils/api";
+import { LoadingSpinner } from "~/components/LoadingSpinner";
+import { NotificationCard } from "~/components/NotificationCard";
 
-const TweetPage: NextPage = () => {
-  const router = useRouter();
+const NotificationsPage: NextPage = () => {
   const session = useSession();
-  const id = typeof router.query.id === "string" ? router.query.id : "";
   const {
-    data: tweet,
+    data: notifications,
     isLoading,
     isError,
-  } = api.tweet.getById.useQuery({ id });
-  useTweetDetailUpdates();
+  } = api.notification.getNotifications.useQuery();
 
   if (isLoading) return <LoadingSpinner />;
-  if (!id || isError || tweet == null) return <ErrorPage statusCode={404} />;
+  if (isError) return <ErrorPage statusCode={404} />;
 
   return (
     <>
       <Head>
-        <title>{`Bird Is The Word - Tweet Detail`}</title>
+        <title>Bird Is The Word - Notifications</title>
       </Head>
-      <header className="sticky top-0 z-10 border-b bg-white pb-2 pt-2">
+      <header className="sticky top-0 z-10 border-b bg-white pt-2">
         <div className="ml-4 hidden pb-2 lg:block">
           <div className="flex gap-4">
-            <div className="text-lg font-bold">Tweet Detail</div>
+            <div className="text-lg font-bold">Notifications</div>
             {session.status === "authenticated" ? (
               <div className="flex flex-grow flex-row-reverse pr-6 pt-2">
                 <NotificationInbox />
@@ -46,7 +41,7 @@ const TweetPage: NextPage = () => {
           <label htmlFor="my-drawer-2" className="hover:cursor-pointer">
             <MdMenu className="h-6 w-6" />
           </label>
-          <div className="text-lg font-bold">Tweet Detail</div>
+          <div className="text-lg font-bold">Notifications</div>
           {session.status === "authenticated" ? (
             <div className="flex flex-grow flex-row-reverse pr-6">
               <NotificationInbox />
@@ -57,10 +52,17 @@ const TweetPage: NextPage = () => {
         </div>
       </header>
       <main>
-        <TweetCard tweet={tweet} commentsExpanded={true} />
+        <div className="flex flex-col">
+          {notifications.map((notification) => (
+            <NotificationCard
+              notification={notification}
+              key={notification.id}
+            />
+          ))}
+        </div>
       </main>
     </>
   );
 };
 
-export default TweetPage;
+export default NotificationsPage;

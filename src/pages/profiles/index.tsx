@@ -7,6 +7,7 @@ import { VscSearch } from "react-icons/vsc";
 import { useRef, useState } from "react";
 import { api } from "~/utils/api";
 import { InfiniteProfileList } from "~/components/InfiniteProfileList";
+import { NotificationInbox } from "~/components/NotificationInbox";
 
 const Profiles: NextPage = () => {
   const [searchTerm, setSearchTerm] = useState<string | undefined>();
@@ -32,7 +33,11 @@ const Profiles: NextPage = () => {
         <div className="ml-4 hidden lg:block">
           <div className="flex gap-4">
             <div className="text-lg font-bold">Users</div>
-            {session.status !== "authenticated" && (
+            {session.status === "authenticated" ? (
+              <div className="flex flex-grow flex-row-reverse pr-6 pt-2">
+                <NotificationInbox />
+              </div>
+            ) : (
               <div className="mb-5">(sign in to post & comment)</div>
             )}
           </div>
@@ -42,7 +47,11 @@ const Profiles: NextPage = () => {
             <MdMenu className="h-6 w-6" />
           </label>
           <div className="text-lg font-bold">Users</div>
-          {session.status !== "authenticated" && (
+          {session.status === "authenticated" ? (
+            <div className="flex flex-grow flex-row-reverse pr-6">
+              <NotificationInbox />
+            </div>
+          ) : (
             <div className="mb-5">(sign in to post & comment)</div>
           )}
         </div>

@@ -6,6 +6,7 @@ import { api } from "~/utils/api";
 import "~/styles/globals.css";
 import { SideDrawer } from "~/components/SideDrawer";
 import { useRef } from "react";
+import { PusherProvider } from "~/context/PusherContext";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -19,29 +20,31 @@ const MyApp: AppType<{ session: Session | null }> = ({
 
   return (
     <SessionProvider session={session}>
-      <Head>
-        <title>Bird Is The Word</title>
-        <meta name="description" content="This is a social media app" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <div
-        data-theme="mytheme"
-        className="drawer-mobile container drawer mx-auto max-w-xl lg:max-w-3xl"
-      >
-        <input
-          ref={checkboxRef}
-          id="my-drawer-2"
-          type="checkbox"
-          className="drawer-toggle"
-        />
-        <div className="drawer-content" id="infiniteScrollTarget">
-          <Component {...pageProps} />
+      <PusherProvider>
+        <Head>
+          <title>Bird Is The Word</title>
+          <meta name="description" content="This is a social media app" />
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
+        <div
+          data-theme="mytheme"
+          className="container drawer-mobile drawer mx-auto max-w-xl lg:max-w-3xl"
+        >
+          <input
+            ref={checkboxRef}
+            id="my-drawer-2"
+            type="checkbox"
+            className="drawer-toggle"
+          />
+          <div className="drawer-content" id="infiniteScrollTarget">
+            <Component {...pageProps} />
+          </div>
+          <div className="drawer-side">
+            <label htmlFor="my-drawer-2" className="drawer-overlay"></label>
+            <SideDrawer onItemClick={closeSideDrawer} />
+          </div>
         </div>
-        <div className="drawer-side">
-          <label htmlFor="my-drawer-2" className="drawer-overlay"></label>
-          <SideDrawer onItemClick={closeSideDrawer} />
-        </div>
-      </div>
+      </PusherProvider>
     </SessionProvider>
   );
 };
