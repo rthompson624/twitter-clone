@@ -40,7 +40,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
             type="checkbox"
             className="drawer-toggle"
           />
-          <div className="drawer-content" id="infiniteScrollTarget">
+          <div className="drawer-content lg:!z-20" id="infiniteScrollTarget">
             <Component {...pageProps} />
           </div>
           <div className="drawer-side">
