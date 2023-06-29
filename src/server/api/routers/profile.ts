@@ -1,3 +1,4 @@
+import { type inferRouterOutputs } from "@trpc/server";
 import { z } from "zod";
 import {
   createTRPCRouter,
@@ -40,6 +41,42 @@ export const profileRouter = createTRPCRouter({
         isFollowing: user.followers.length > 0,
       };
       return profile;
+    }),
+  getFollowers: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input: { userId }, ctx }) => {
+      const query = await ctx.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          followers: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              email: true,
+            },
+          },
+        },
+      });
+      return query ? query.followers : [];
+    }),
+  getFollows: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input: { userId }, ctx }) => {
+      const query = await ctx.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          follows: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              email: true,
+            },
+          },
+        },
+      });
+      return query ? query.follows : [];
     }),
   toggleFollow: protectedProcedure
     .input(z.object({ userId: z.string() }))
@@ -154,3 +191,6 @@ export type Profile = {
   tweetsCount: number;
   isFollowing: boolean;
 };
+
+type RouterOutput = inferRouterOutputs<typeof profileRouter>;
+export type MiniProfile = RouterOutput["getFollowers"][number];
