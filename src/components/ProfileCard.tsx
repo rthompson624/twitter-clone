@@ -5,6 +5,8 @@ import { api } from "~/utils/api";
 import Link from "next/link";
 import { FiUserCheck } from "react-icons/fi";
 import { ProfileImage } from "./ProfileImage";
+import { useRef } from "react";
+import { ProfilesModal } from "./ProfilesModal";
 
 export function ProfileCard({
   profile,
@@ -13,6 +15,8 @@ export function ProfileCard({
   profile: Profile;
   editable: boolean;
 }) {
+  const followersDialogRef = useRef<HTMLInputElement>(null);
+  const followsDialogRef = useRef<HTMLInputElement>(null);
   const trpcCtx = api.useContext();
   const toggleFollow = api.profile.toggleFollow.useMutation({
     onSuccess: ({ addedFollow }) => {
@@ -27,6 +31,30 @@ export function ProfileCard({
       });
     },
   });
+  const { data: followers, refetch: fetchFollowers } =
+    api.profile.getFollowers.useQuery(
+      {
+        userId: profile.id,
+      },
+      { enabled: false, refetchOnWindowFocus: false }
+    );
+  const { data: follows, refetch: fetchFollows } =
+    api.profile.getFollows.useQuery(
+      {
+        userId: profile.id,
+      },
+      { enabled: false, refetchOnWindowFocus: false }
+    );
+
+  async function showFollowers() {
+    followersDialogRef.current?.click();
+    await fetchFollowers();
+  }
+
+  async function showFollows() {
+    followsDialogRef.current?.click();
+    await fetchFollows();
+  }
 
   return (
     <div className="ml-4">
@@ -57,11 +85,17 @@ export function ProfileCard({
         )}
       </div>
       <div className="ml-14 mt-1 flex flex-row gap-6 text-sm text-gray-500">
-        <div className="flex gap-1">
+        <div
+          onClick={() => void showFollows()}
+          className="flex cursor-pointer gap-1"
+        >
           <div className="font-bold text-black">{profile.followsCount}</div>
           <div>Following</div>
         </div>
-        <div className="flex gap-1">
+        <div
+          onClick={() => void showFollowers()}
+          className="flex cursor-pointer gap-1"
+        >
           <div className="font-bold text-black">{profile.followersCount}</div>
           <div>
             {getPlural(profile.followersCount, "Follower", "Followers")}
@@ -72,6 +106,18 @@ export function ProfileCard({
           <div>{getPlural(profile.tweetsCount, "Tweet", "Tweets")}</div>
         </div>
       </div>
+      <ProfilesModal
+        modalId={`${profile.id}-following`}
+        modalRef={followsDialogRef}
+        title="Following"
+        profiles={follows}
+      />
+      <ProfilesModal
+        modalId={`${profile.id}-followers`}
+        modalRef={followersDialogRef}
+        title="Followers"
+        profiles={followers}
+      />
     </div>
   );
 }
